@@ -18,6 +18,10 @@ def test_codes_increment_per_initials():
     assert data.create_contact("Alice Smith") == "as1"
 
 
+def test_code_falls_back_when_name_has_no_letters():
+    assert data.next_code("") == "xx1"
+
+
 def test_create_and_read_contact():
     code = data.create_contact("Jane Doe", email="j@co.com", company="Acme")
     info = data.parse_header(data.read_contact(code))
@@ -45,6 +49,11 @@ def test_add_note_appends_dated_line():
     ]
     assert notes[-1].endswith("called, left voicemail")
     assert date.today().isoformat() in notes[-1]
+
+
+def test_add_note_to_missing_contact_raises():
+    with pytest.raises(FileNotFoundError):
+        data.add_note("zz9", "nope")
 
 
 def test_reminders_roundtrip_sorted_by_due():
