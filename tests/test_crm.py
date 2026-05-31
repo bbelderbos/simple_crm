@@ -1,0 +1,55 @@
+from datetime import date
+
+import pytest
+
+from crm import data
+
+
+@pytest.fixture(autouse=True)
+def crm_data(tmp_path, monkeypatch):
+    monkeypatch.setenv("CRM_DATA", str(tmp_path))
+    (tmp_path / "contacts").mkdir()
+    return tmp_path
+
+
+def test_codes_increment_per_initials():
+    assert data.create_contact("Jane Doe") == "jd1"
+    assert data.create_contact("John Davis") == "jd2"
+    assert data.create_contact("Alice Smith") == "as1"
+
+
+def test_create_and_read_contact():
+    code = data.create_contact("Jane Doe", email="j@co.com", company="Acme")
+    info = data.parse_header(data.read_contact(code))
+    assert info["name"] == "Jane Doe"
+    assert info["email"] == "j@co.com"
+    assert info["company"] == "Acme"
+    assert info["stage"] == "open"
+
+
+def test_read_missing_contact_raises():
+    with pytest.raises(FileNotFoundError):
+        data.read_contact("zz9")
+
+
+def test_contact_active_until_won_or_archived():
+    code = data.create_contact("Jane Doe")
+    assert data.is_active(data.read_contact(code)) is True
+
+
+def test_add_note_appends_dated_line():
+    code = data.create_contact("Jane Doe")
+    data.add_note(code, "called, left voicemail")
+    notes = [
+        line for line in data.read_contact(code).splitlines() if line.startswith("- ")
+    ]
+    assert notes[-1].endswith("called, left voicemail")
+    assert date.today().isoformat() in notes[-1]
+
+
+def test_reminders_roundtrip_sorted_by_due():
+    data.create_contact("Jane Doe")
+    data.add_reminder("jd1", "follow up", date(2026, 6, 10))
+    data.add_reminder("jd1", "send proposal", date(2026, 6, 1))
+    rows = data.load_reminders()
+    assert [r["Due"] for r in rows] == ["2026-06-01", "2026-06-10"]
