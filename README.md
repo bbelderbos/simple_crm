@@ -29,7 +29,9 @@ If unset, it defaults to `~/crm_data`.
 
 ```bash
 uv run crm init                          # create the data folder + files
-uv run crm add                           # add a contact (prompts for name/email/company)
+uv run crm product add pro "Pro Plan" 49 # add a product to the catalog
+uv run crm product list                  # show the catalog
+uv run crm add                           # add a contact (prompts name/email/company/product)
 uv run crm list                          # all contacts
 uv run crm get jd1                       # show one contact
 uv run crm note jd1 "had intro call"     # append a dated note
@@ -54,6 +56,7 @@ Each contact is plain Markdown you can open in any editor:
 # Jane Doe
 - **Email**: j@co.com
 - **Company**: Acme
+- **Product**: pro
 
 ## Notes
 - 2026-05-28 — had intro call

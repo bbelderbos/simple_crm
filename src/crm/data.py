@@ -12,6 +12,7 @@ CODE_RE = re.compile(r"^([a-z]{2})(\d+)$")
 CONTACT_TEMPLATE = """# {name}
 - **Email**: {email}
 - **Company**: {company}
+- **Product**: {product}
 
 ## Notes
 """
@@ -23,6 +24,33 @@ def crm_data() -> Path:
 
 def contacts_dir() -> Path:
     return crm_data() / "contacts"
+
+
+def products_path() -> Path:
+    return crm_data() / "products.md"
+
+
+def load_products() -> list[dict[str, str]]:
+    path = products_path()
+    if not path.exists():
+        return []
+    rows = []
+    for line in path.read_text().splitlines()[2:]:
+        if not line.strip():
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 3:
+            rows.append(dict(zip(["Code", "Name", "Price"], cells)))
+    return rows
+
+
+def add_product(code: str, name: str, price: str) -> None:
+    if any(p["Code"] == code for p in load_products()):
+        raise ValueError(f"Product {code} already exists")
+    path = products_path()
+    if not path.exists():
+        path.write_text(PRODUCTS_HEADER)
+    path.write_text(path.read_text().rstrip() + f"\n| {code} | {name} | {price} |\n")
 
 
 def contact_path(code: str) -> Path:
@@ -40,11 +68,15 @@ def next_code(name: str) -> str:
     return f"{initials}{max(used, default=0) + 1}"
 
 
-def create_contact(name: str, email: str = "", company: str = "") -> str:
+def create_contact(
+    name: str, email: str = "", company: str = "", product: str = ""
+) -> str:
     contacts_dir().mkdir(parents=True, exist_ok=True)
     code = next_code(name)
     contact_path(code).write_text(
-        CONTACT_TEMPLATE.format(name=name, email=email, company=company)
+        CONTACT_TEMPLATE.format(
+            name=name, email=email, company=company, product=product
+        )
     )
     return code
 

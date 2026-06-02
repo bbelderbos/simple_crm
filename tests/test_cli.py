@@ -17,6 +17,47 @@ def _add_jane() -> None:
     assert result.exit_code == 0
 
 
+def test_product_add_then_list():
+    runner.invoke(cli, ["init"])
+    result = runner.invoke(cli, ["product", "add", "pro", "Pro Plan", "49"])
+    assert result.exit_code == 0
+    listed = runner.invoke(cli, ["product", "list"])
+    assert "pro" in listed.output
+    assert "Pro Plan" in listed.output
+
+
+def test_product_add_duplicate_errors():
+    runner.invoke(cli, ["init"])
+    runner.invoke(cli, ["product", "add", "pro", "Pro Plan", "49"])
+    result = runner.invoke(cli, ["product", "add", "pro", "Dup", "1"])
+    assert result.exit_code == 1
+    assert "already exists" in result.output
+
+
+def test_product_list_empty():
+    runner.invoke(cli, ["init"])
+    result = runner.invoke(cli, ["product", "list"])
+    assert result.exit_code == 0
+    assert "No products" in result.output
+
+
+def test_add_with_product_shows_in_list():
+    runner.invoke(cli, ["init"])
+    runner.invoke(cli, ["product", "add", "pro", "Pro Plan", "49"])
+    result = runner.invoke(cli, ["add"], input="Jane Doe\nj@co.com\nAcme\npro\n")
+    assert result.exit_code == 0
+    listed = runner.invoke(cli, ["list"])
+    assert "pro" in listed.output
+
+
+def test_add_with_unknown_product_errors():
+    runner.invoke(cli, ["init"])
+    runner.invoke(cli, ["product", "add", "pro", "Pro Plan", "49"])
+    result = runner.invoke(cli, ["add"], input="Jane Doe\nj@co.com\nAcme\nzz\n")
+    assert result.exit_code == 1
+    assert "Unknown product" in result.output
+
+
 def test_init_creates_files(crm_data):
     result = runner.invoke(cli, ["init"])
     assert result.exit_code == 0

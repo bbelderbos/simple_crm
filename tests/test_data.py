@@ -52,6 +52,26 @@ def test_add_note_to_missing_contact_raises():
         data.add_note("zz9", "nope")
 
 
+def test_add_and_load_products():
+    data.add_product("pro", "Pro Plan", "49")
+    data.add_product("ent", "Enterprise", "299")
+    products = data.load_products()
+    assert [p["Code"] for p in products] == ["pro", "ent"]
+    assert products[0]["Name"] == "Pro Plan"
+    assert products[1]["Price"] == "299"
+
+
+def test_add_duplicate_product_raises():
+    data.add_product("pro", "Pro Plan", "49")
+    with pytest.raises(ValueError):
+        data.add_product("pro", "Dup", "1")
+
+
+def test_create_contact_stores_product():
+    code = data.create_contact("Jane Doe", product="pro")
+    assert data.parse_header(data.read_contact(code))["product"] == "pro"
+
+
 def test_reminders_roundtrip_sorted_by_due():
     data.create_contact("Jane Doe")
     data.add_reminder("jd1", "follow up", date(2026, 6, 10))
