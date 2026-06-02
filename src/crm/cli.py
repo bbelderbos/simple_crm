@@ -43,15 +43,9 @@ def list_contacts() -> None:
     table.add_column("Code", style="cyan")
     table.add_column("Name")
     table.add_column("Company")
-    table.add_column("Stage", style="green")
     for f in sorted(cdir.glob("*.md")):
-        text = f.read_text()
-        if not data.is_active(text):
-            continue
-        info = data.parse_header(text)
-        table.add_row(
-            f.stem, info.get("name", ""), info.get("company", ""), info.get("stage", "")
-        )
+        info = data.parse_header(f.read_text())
+        table.add_row(f.stem, info.get("name", ""), info.get("company", ""))
     console.print(table)
 
 

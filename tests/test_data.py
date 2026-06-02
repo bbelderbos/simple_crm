@@ -28,17 +28,11 @@ def test_create_and_read_contact():
     assert info["name"] == "Jane Doe"
     assert info["email"] == "j@co.com"
     assert info["company"] == "Acme"
-    assert info["stage"] == "open"
 
 
 def test_read_missing_contact_raises():
     with pytest.raises(FileNotFoundError):
         data.read_contact("zz9")
-
-
-def test_contact_active_until_won_or_archived():
-    code = data.create_contact("Jane Doe")
-    assert data.is_active(data.read_contact(code)) is True
 
 
 def test_add_note_appends_dated_line():

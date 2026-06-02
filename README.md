@@ -30,7 +30,7 @@ If unset, it defaults to `~/crm_data`.
 ```bash
 uv run crm init                          # create the data folder + files
 uv run crm add                           # add a contact (prompts for name/email/company)
-uv run crm list                          # active contacts
+uv run crm list                          # all contacts
 uv run crm get jd1                       # show one contact
 uv run crm note jd1 "had intro call"     # append a dated note
 uv run crm remind jd1 "follow up" --in 7 # set a reminder N days out
@@ -54,14 +54,10 @@ Each contact is plain Markdown you can open in any editor:
 # Jane Doe
 - **Email**: j@co.com
 - **Company**: Acme
-- **Stage**: open
 
 ## Notes
 - 2026-05-28 — had intro call
 ```
-
-A contact is **active** until its `Stage` is `won` or `archived`. Edit the file
-by hand to change it.
 
 ## Shell glue (optional)
 

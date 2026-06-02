@@ -12,7 +12,6 @@ CODE_RE = re.compile(r"^([a-z]{2})(\d+)$")
 CONTACT_TEMPLATE = """# {name}
 - **Email**: {email}
 - **Company**: {company}
-- **Stage**: open
 
 ## Notes
 """
@@ -68,10 +67,6 @@ def parse_header(text: str) -> dict[str, str]:
         if field:
             info[field.group(1).lower()] = field.group(2).strip()
     return info
-
-
-def is_active(text: str) -> bool:
-    return parse_header(text).get("stage", "").lower() not in ("won", "archived")
 
 
 def add_note(code: str, content: str) -> None:
