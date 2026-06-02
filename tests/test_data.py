@@ -1,6 +1,7 @@
 from datetime import date
 
 import pytest
+from freezegun import freeze_time
 
 from crm import data
 
@@ -35,6 +36,7 @@ def test_read_missing_contact_raises():
         data.read_contact("zz9")
 
 
+@freeze_time("2026-06-02")
 def test_add_note_appends_dated_line():
     code = data.create_contact("Jane Doe")
     data.add_note(code, "called, left voicemail")
@@ -42,7 +44,7 @@ def test_add_note_appends_dated_line():
         line for line in data.read_contact(code).splitlines() if line.startswith("- ")
     ]
     assert notes[-1].endswith("called, left voicemail")
-    assert date.today().isoformat() in notes[-1]
+    assert "2026-06-02" in notes[-1]
 
 
 def test_add_note_to_missing_contact_raises():
