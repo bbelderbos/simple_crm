@@ -107,7 +107,7 @@ def add_reminder(contact: str, description: str, due: date) -> int:
 
 
 def _write_reminders(rows: list[dict[str, str]]) -> None:
-    lines = [REMINDERS_HEADER.rstrip()]
+    lines: list[str] = [REMINDERS_HEADER.rstrip()]
     for r in rows:
         lines.append(
             f"| {r['Due']} | {r['Contact']} | {r['Description']} | {r['Done']} |"
