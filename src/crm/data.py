@@ -129,6 +129,8 @@ def load_reminders() -> list[dict[str, str]]:
 
 
 def add_reminder(contact: str, description: str, due: date) -> None:
+    if "|" in description:
+        raise ValueError("'|' is not allowed in reminder description")
     rows = load_reminders()
     rows.append(
         {
