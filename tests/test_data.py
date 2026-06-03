@@ -1,5 +1,4 @@
 from datetime import date
-from unittest.mock import patch
 
 import pytest
 from freezegun import freeze_time
@@ -148,9 +147,7 @@ def test_add_reminder_rejects_pipe_in_description():
         data.add_reminder("jd1", "call | email", date(2026, 6, 5))
 
 
-@patch("crm.data.next_code")
-def test_cannot_create_contact_with_same_code(mock_next_code):
-    mock_next_code.return_value = "jd1"
+def test_cannot_create_contact_with_same_code():
     data.create_contact("Jane Doe")
     with pytest.raises(FileExistsError):
-        data.create_contact("Jane Doe")
+        data.create_contact("Jane Doe", code="jd1")

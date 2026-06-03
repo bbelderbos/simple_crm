@@ -71,10 +71,15 @@ def next_code(name: str) -> str:
 
 
 def create_contact(
-    name: str, email: str = "", company: str = "", product: str = ""
+    name: str,
+    *,
+    email: str = "",
+    company: str = "",
+    product: str = "",
+    code: str | None = None,
 ) -> str:
     contacts_dir().mkdir(parents=True, exist_ok=True)
-    code = next_code(name)
+    code = code if code is not None else next_code(name)
     path = contact_path(code)
     if path.exists():
         raise FileExistsError(f"Contact {code} already exists")
