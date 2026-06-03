@@ -136,11 +136,6 @@ def test_reminders_empty():
     assert "No reminders" in result.output
 
 
-# --- Bug repros (see ~/reviews/simple_crm-full-2026-06-03.md) ---
-
-
-# m1: a hand-edited, unparseable Due date makes `reminders` crash with a raw
-# ValueError traceback instead of skipping the bad row.
 def test_reminders_survives_malformed_date(crm_data):
     runner.invoke(cli, ["init"])
     path = crm_data / "reminders.md"
