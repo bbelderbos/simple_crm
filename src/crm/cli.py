@@ -139,13 +139,14 @@ def reminders() -> None:
     table.add_column("Description")
     today = date.today()
     for r in rows:
+        due_str = r["Due"]
         try:
             due = datetime.strptime(r["Due"], "%Y-%m-%d").date()
             style = "red" if due <= today else None
         except ValueError:
-            due = "Invalid date"
+            due_str = "Invalid date"
             style = None
-        table.add_row(r["Due"], r["Contact"], r["Description"], style=style)
+        table.add_row(due_str, r["Contact"], r["Description"], style=style)
     console.print(table)
 
 
