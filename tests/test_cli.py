@@ -1,6 +1,7 @@
 import pytest
 from typer.testing import CliRunner
 
+from crm import data
 from crm.cli import cli
 
 runner = CliRunner()
@@ -133,3 +134,18 @@ def test_reminders_empty():
     result = runner.invoke(cli, ["reminders"])
     assert result.exit_code == 0
     assert "No reminders" in result.output
+
+
+def test_reminders_survives_malformed_date(crm_data):
+    runner.invoke(cli, ["init"])
+    path = crm_data / "reminders.md"
+    path.write_text(data.REMINDERS_HEADER + "| not-a-date | jd1 | bad row | no |\n")
+    result = runner.invoke(cli, ["reminders"])
+    assert result.exit_code == 0
+
+
+def test_remind_rejects_negative_days():
+    runner.invoke(cli, ["init"])
+    _add_jane()
+    result = runner.invoke(cli, ["remind", "jd1", "past", "--in", "-3"])
+    assert result.exit_code == 1

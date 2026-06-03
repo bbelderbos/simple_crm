@@ -8,7 +8,6 @@ REMINDERS_HEADER = (
     "| Due | Contact | Description | Done |\n|-----|---------|-------------|------|\n"
 )
 
-CODE_RE = re.compile(r"^([a-z]{2})(\d+)$")
 CONTACT_TEMPLATE = """# {name}
 - **Email**: {email}
 - **Company**: {company}
@@ -16,6 +15,7 @@ CONTACT_TEMPLATE = """# {name}
 
 ## Notes
 """
+DEFAULT_INITIALS = "xx"
 
 
 def crm_data() -> Path:
@@ -47,6 +47,8 @@ def load_products() -> list[dict[str, str]]:
 def add_product(code: str, name: str, price: str) -> None:
     if any(p["Code"] == code for p in load_products()):
         raise ValueError(f"Product {code} already exists")
+    if "|" in code + name + price:
+        raise ValueError("'|' is not allowed in product fields")
     path = products_path()
     if not path.exists():
         path.write_text(PRODUCTS_HEADER)
@@ -58,13 +60,13 @@ def contact_path(code: str) -> Path:
 
 
 def next_code(name: str) -> str:
-    initials = "".join(w[0].lower() for w in name.split()[:2] if w) or "xx"
-    used = []
-    if contacts_dir().exists():
-        for f in contacts_dir().glob(f"{initials}*.md"):
-            m = CODE_RE.match(f.stem)
-            if m and m.group(1) == initials:
-                used.append(int(m.group(2)))
+    initials = "".join(w[0].lower() for w in name.split()[:2]) or DEFAULT_INITIALS
+    pattern = re.compile(rf"^{re.escape(initials)}(\d+)$")
+    used = [
+        int(m.group(1))
+        for f in contacts_dir().glob(f"{initials}*.md")
+        if (m := pattern.match(f.stem))
+    ]
     return f"{initials}{max(used, default=0) + 1}"
 
 
@@ -73,7 +75,10 @@ def create_contact(
 ) -> str:
     contacts_dir().mkdir(parents=True, exist_ok=True)
     code = next_code(name)
-    contact_path(code).write_text(
+    path = contact_path(code)
+    if path.exists():
+        raise FileExistsError(f"Contact {code} already exists")
+    path.write_text(
         CONTACT_TEMPLATE.format(
             name=name, email=email, company=company, product=product
         )
@@ -118,12 +123,15 @@ def load_reminders() -> list[dict[str, str]]:
         if not line.strip():
             continue
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        if len(cells) >= 4 and cells[3].lower() != "yes":
-            rows.append(dict(zip(["Due", "Contact", "Description", "Done"], cells)))
+        if len(cells) != 4:
+            continue
+        rows.append(dict(zip(["Due", "Contact", "Description", "Done"], cells)))
     return rows
 
 
-def add_reminder(contact: str, description: str, due: date) -> int:
+def add_reminder(contact: str, description: str, due: date) -> None:
+    if "|" in description:
+        raise ValueError("'|' is not allowed in reminder description")
     rows = load_reminders()
     rows.append(
         {
@@ -135,7 +143,6 @@ def add_reminder(contact: str, description: str, due: date) -> int:
     )
     rows.sort(key=lambda r: r["Due"])
     _write_reminders(rows)
-    return len(rows)
 
 
 def _write_reminders(rows: list[dict[str, str]]) -> None:
