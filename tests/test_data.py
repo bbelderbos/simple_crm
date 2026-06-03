@@ -105,8 +105,6 @@ def test_add_reminder_returns_none():
     assert data.add_reminder("jd1", "x", date(2026, 6, 5)) is None
 
 
-# M2: a hand-typed '|' in a field breaks the Markdown-table round-trip; reject
-# it on the write path.
 def test_add_product_rejects_pipe_in_field():
     with pytest.raises(ValueError):
         data.add_product("pro", "Pro | Plus", "49")

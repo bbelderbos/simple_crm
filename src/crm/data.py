@@ -47,6 +47,8 @@ def load_products() -> list[dict[str, str]]:
 def add_product(code: str, name: str, price: str) -> None:
     if any(p["Code"] == code for p in load_products()):
         raise ValueError(f"Product {code} already exists")
+    if "|" in code + name + price:
+        raise ValueError("'|' is not allowed in product fields")
     path = products_path()
     if not path.exists():
         path.write_text(PRODUCTS_HEADER)
