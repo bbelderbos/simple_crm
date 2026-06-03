@@ -78,3 +78,49 @@ def test_reminders_roundtrip_sorted_by_due():
     data.add_reminder("jd1", "send proposal", date(2026, 6, 1))
     rows = data.load_reminders()
     assert [r["Due"] for r in rows] == ["2026-06-01", "2026-06-10"]
+
+
+# --- Bug repros (see ~/reviews/simple_crm-full-2026-06-03.md) ---
+
+
+# C1: single-word names yield a one-letter prefix that CODE_RE never matches,
+# so next_code repeats and create_contact overwrites the prior file.
+def test_single_word_names_do_not_collide():
+    first = data.create_contact("Cher")
+    second = data.create_contact("Carlos")
+    assert first != second
+    assert "Cher" in data.read_contact(first)
+    assert "Carlos" in data.read_contact(second)
+
+
+def test_next_code_increments_for_single_word_name():
+    data.create_contact("Cher")
+    assert data.next_code("Carlos") == "c2"
+
+
+# C2: load_reminders filters out Done==yes, and add_reminder round-trips through
+# it, so completed reminders are dropped on the next add.
+def test_completed_reminder_survives_adding_another(crm_data):
+    path = crm_data / "reminders.md"
+    path.write_text(data.REMINDERS_HEADER + "| 2026-06-01 | jd1 | done task | yes |\n")
+    data.add_reminder("jd1", "new task", date(2026, 6, 5))
+    assert "done task" in path.read_text()
+
+
+# M1: add_reminder's return is len(rows) — not an id, never consumed. Drop it.
+def test_add_reminder_returns_none():
+    data.create_contact("Jane Doe")
+    assert data.add_reminder("jd1", "x", date(2026, 6, 5)) is None
+
+
+# M2: a hand-typed '|' in a field breaks the Markdown-table round-trip; reject
+# it on the write path.
+def test_add_product_rejects_pipe_in_field():
+    with pytest.raises(ValueError):
+        data.add_product("pro", "Pro | Plus", "49")
+
+
+def test_add_reminder_rejects_pipe_in_description():
+    data.create_contact("Jane Doe")
+    with pytest.raises(ValueError):
+        data.add_reminder("jd1", "call | email", date(2026, 6, 5))
