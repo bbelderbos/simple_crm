@@ -149,5 +149,5 @@ def reminders() -> None:
     console.print(table)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     cli()
