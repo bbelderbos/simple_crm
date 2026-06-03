@@ -124,9 +124,8 @@ def load_reminders() -> list[dict[str, str]]:
             continue
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
         if len(cells) != 4:
-            print(f"Skipping invalid reminder line: {line}")
-        else:
-            rows.append(dict(zip(["Due", "Contact", "Description", "Done"], cells)))
+            continue
+        rows.append(dict(zip(["Due", "Contact", "Description", "Done"], cells)))
     return rows
 
 
