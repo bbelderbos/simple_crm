@@ -8,7 +8,6 @@ REMINDERS_HEADER = (
     "| Due | Contact | Description | Done |\n|-----|---------|-------------|------|\n"
 )
 
-CODE_RE = re.compile(r"^([a-z]{2})(\d+)$")
 CONTACT_TEMPLATE = """# {name}
 - **Email**: {email}
 - **Company**: {company}
@@ -16,6 +15,7 @@ CONTACT_TEMPLATE = """# {name}
 
 ## Notes
 """
+DEFAULT_INITIALS = "xx"
 
 
 def crm_data() -> Path:
@@ -58,22 +58,23 @@ def contact_path(code: str) -> Path:
 
 
 def next_code(name: str) -> str:
-    initials = "".join(w[0].lower() for w in name.split()[:2] if w) or "xx"
-    used = []
-    if contacts_dir().exists():
-        for f in contacts_dir().glob(f"{initials}*.md"):
-            m = CODE_RE.match(f.stem)
-            if m and m.group(1) == initials:
-                used.append(int(m.group(2)))
+    initials = "".join(w[0].lower() for w in name.split()[:2]) or DEFAULT_INITIALS
+    pattern = re.compile(rf"^{re.escape(initials)}(\d+)$")
+    used = [
+        int(m.group(1))
+        for f in contacts_dir().glob(f"{initials}*.md")
+        if (m := pattern.match(f.stem))
+    ]
     return f"{initials}{max(used, default=0) + 1}"
 
 
-def create_contact(
-    name: str, email: str = "", company: str = "", product: str = ""
-) -> str:
+def create_contact(name, email="", company="", product="") -> str:
     contacts_dir().mkdir(parents=True, exist_ok=True)
     code = next_code(name)
-    contact_path(code).write_text(
+    path = contact_path(code)
+    if path.exists():
+        raise FileExistsError(f"Contact {code} already exists")
+    path.write_text(
         CONTACT_TEMPLATE.format(
             name=name, email=email, company=company, product=product
         )

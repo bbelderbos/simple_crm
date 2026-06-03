@@ -80,11 +80,6 @@ def test_reminders_roundtrip_sorted_by_due():
     assert [r["Due"] for r in rows] == ["2026-06-01", "2026-06-10"]
 
 
-# --- Bug repros (see ~/reviews/simple_crm-full-2026-06-03.md) ---
-
-
-# C1: single-word names yield a one-letter prefix that CODE_RE never matches,
-# so next_code repeats and create_contact overwrites the prior file.
 def test_single_word_names_do_not_collide():
     first = data.create_contact("Cher")
     second = data.create_contact("Carlos")
