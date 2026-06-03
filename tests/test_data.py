@@ -1,4 +1,5 @@
 from datetime import date
+from unittest.mock import patch
 
 import pytest
 from freezegun import freeze_time
@@ -61,6 +62,14 @@ def test_add_and_load_products():
     assert products[1]["Price"] == "299"
 
 
+def test_load_products_skips_blank_lines(crm_data):
+    path = crm_data / "products.md"
+    path.write_text(
+        data.PRODUCTS_HEADER + "| pro | Pro Plan | 49 |\n\n| ent | Enterprise | 299 |\n"
+    )
+    assert [p["Code"] for p in data.load_products()] == ["pro", "ent"]
+
+
 def test_add_duplicate_product_raises():
     data.add_product("pro", "Pro Plan", "49")
     with pytest.raises(ValueError):
@@ -80,11 +89,6 @@ def test_reminders_roundtrip_sorted_by_due():
     assert [r["Due"] for r in rows] == ["2026-06-01", "2026-06-10"]
 
 
-# --- Bug repros (see ~/reviews/simple_crm-full-2026-06-03.md) ---
-
-
-# C1: single-word names yield a one-letter prefix that CODE_RE never matches,
-# so next_code repeats and create_contact overwrites the prior file.
 def test_single_word_names_do_not_collide():
     first = data.create_contact("Cher")
     second = data.create_contact("Carlos")
@@ -98,8 +102,6 @@ def test_next_code_increments_for_single_word_name():
     assert data.next_code("Carlos") == "c2"
 
 
-# C2: load_reminders filters out Done==yes, and add_reminder round-trips through
-# it, so completed reminders are dropped on the next add.
 def test_completed_reminder_survives_adding_another(crm_data):
     path = crm_data / "reminders.md"
     path.write_text(data.REMINDERS_HEADER + "| 2026-06-01 | jd1 | done task | yes |\n")
@@ -107,14 +109,34 @@ def test_completed_reminder_survives_adding_another(crm_data):
     assert "done task" in path.read_text()
 
 
-# M1: add_reminder's return is len(rows) — not an id, never consumed. Drop it.
+def test_load_reminders_skips_blank_lines(crm_data):
+    path = crm_data / "reminders.md"
+    path.write_text(
+        data.REMINDERS_HEADER
+        + "| 2026-06-01 | jd1 | follow up | no |\n"
+        + "\n"
+        + "| 2026-06-10 | jd1 | send proposal | no |\n"
+    )
+    rows = data.load_reminders()
+    assert [r["Due"] for r in rows] == ["2026-06-01", "2026-06-10"]
+
+
+def test_load_reminders_skips_malformed_line(crm_data):
+    path = crm_data / "reminders.md"
+    path.write_text(
+        data.REMINDERS_HEADER
+        + "| 2026-06-01 | jd1 | missing done column |\n"
+        + "| 2026-06-10 | jd1 | good row | no |\n"
+    )
+    rows = data.load_reminders()
+    assert [r["Description"] for r in rows] == ["good row"]
+
+
 def test_add_reminder_returns_none():
     data.create_contact("Jane Doe")
     assert data.add_reminder("jd1", "x", date(2026, 6, 5)) is None
 
 
-# M2: a hand-typed '|' in a field breaks the Markdown-table round-trip; reject
-# it on the write path.
 def test_add_product_rejects_pipe_in_field():
     with pytest.raises(ValueError):
         data.add_product("pro", "Pro | Plus", "49")
@@ -124,3 +146,11 @@ def test_add_reminder_rejects_pipe_in_description():
     data.create_contact("Jane Doe")
     with pytest.raises(ValueError):
         data.add_reminder("jd1", "call | email", date(2026, 6, 5))
+
+
+@patch("crm.data.next_code")
+def test_cannot_create_contact_with_same_code(mock_next_code):
+    mock_next_code.return_value = "jd1"
+    data.create_contact("Jane Doe")
+    with pytest.raises(FileExistsError):
+        data.create_contact("Jane Doe")

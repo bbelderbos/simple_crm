@@ -119,6 +119,9 @@ def remind(
     except FileNotFoundError:
         console.print(f"[red]Contact {code} not found[/red]")
         raise typer.Exit(1)
+    if in_days < 0:
+        console.print("[red]Days must be non-negative[/red]")
+        raise typer.Exit(1)
     due = date.today() + timedelta(days=in_days)
     data.add_reminder(code, text, due)
     console.print(f"Reminder set for {code} on {due}")
@@ -136,11 +139,16 @@ def reminders() -> None:
     table.add_column("Description")
     today = date.today()
     for r in rows:
-        due = datetime.strptime(r["Due"], "%Y-%m-%d").date()
-        style = "red" if due <= today else None
-        table.add_row(r["Due"], r["Contact"], r["Description"], style=style)
+        due_str = r["Due"]
+        try:
+            due = datetime.strptime(r["Due"], "%Y-%m-%d").date()
+            style = "red" if due <= today else None
+        except ValueError:
+            due_str = "Invalid date"
+            style = None
+        table.add_row(due_str, r["Contact"], r["Description"], style=style)
     console.print(table)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     cli()
