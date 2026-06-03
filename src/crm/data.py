@@ -119,12 +119,14 @@ def load_reminders() -> list[dict[str, str]]:
         if not line.strip():
             continue
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        if len(cells) >= 4 and cells[3].lower() != "yes":
+        if len(cells) != 4:
+            print(f"Skipping invalid reminder line: {line}")
+        else:
             rows.append(dict(zip(["Due", "Contact", "Description", "Done"], cells)))
     return rows
 
 
-def add_reminder(contact: str, description: str, due: date) -> int:
+def add_reminder(contact: str, description: str, due: date) -> None:
     rows = load_reminders()
     rows.append(
         {
@@ -136,7 +138,6 @@ def add_reminder(contact: str, description: str, due: date) -> int:
     )
     rows.sort(key=lambda r: r["Due"])
     _write_reminders(rows)
-    return len(rows)
 
 
 def _write_reminders(rows: list[dict[str, str]]) -> None:

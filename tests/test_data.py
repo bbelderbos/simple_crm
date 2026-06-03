@@ -93,8 +93,6 @@ def test_next_code_increments_for_single_word_name():
     assert data.next_code("Carlos") == "c2"
 
 
-# C2: load_reminders filters out Done==yes, and add_reminder round-trips through
-# it, so completed reminders are dropped on the next add.
 def test_completed_reminder_survives_adding_another(crm_data):
     path = crm_data / "reminders.md"
     path.write_text(data.REMINDERS_HEADER + "| 2026-06-01 | jd1 | done task | yes |\n")
@@ -102,7 +100,6 @@ def test_completed_reminder_survives_adding_another(crm_data):
     assert "done task" in path.read_text()
 
 
-# M1: add_reminder's return is len(rows) — not an id, never consumed. Drop it.
 def test_add_reminder_returns_none():
     data.create_contact("Jane Doe")
     assert data.add_reminder("jd1", "x", date(2026, 6, 5)) is None
