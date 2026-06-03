@@ -70,7 +70,9 @@ def next_code(name: str) -> str:
     return f"{initials}{max(used, default=0) + 1}"
 
 
-def create_contact(name, email="", company="", product="") -> str:
+def create_contact(
+    name: str, email: str = "", company: str = "", product: str = ""
+) -> str:
     contacts_dir().mkdir(parents=True, exist_ok=True)
     code = next_code(name)
     path = contact_path(code)
