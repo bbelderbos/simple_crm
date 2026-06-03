@@ -119,6 +119,9 @@ def remind(
     except FileNotFoundError:
         console.print(f"[red]Contact {code} not found[/red]")
         raise typer.Exit(1)
+    if in_days < 0:
+        console.print("[red]Days must be non-negative[/red]")
+        raise typer.Exit(1)
     due = date.today() + timedelta(days=in_days)
     data.add_reminder(code, text, due)
     console.print(f"Reminder set for {code} on {due}")

@@ -144,7 +144,6 @@ def test_reminders_survives_malformed_date(crm_data):
     assert result.exit_code == 0
 
 
-# m4: --in accepts negatives, silently creating a reminder in the past.
 def test_remind_rejects_negative_days():
     runner.invoke(cli, ["init"])
     _add_jane()
